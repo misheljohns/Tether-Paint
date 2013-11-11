@@ -16,10 +16,11 @@ import android.util.TypedValue;
 
 public class DrawingView extends View {
 	
+	private boolean tetherMode; 
 	//drawing path
 	private Path drawPath;
 	//drawing and canvas paint
-	private Paint drawPaint, canvasPaint;
+	private Paint drawPaint, canvasPaint, cursorPaint;
 	//initial color
 	private int paintColor = 0xFF660000;
 	//canvas
@@ -30,6 +31,10 @@ public class DrawingView extends View {
 	private float brushSize, lastBrushSize;
 	
 	private boolean erase=false;
+	
+	private double X,Y,Z;
+	
+	private boolean pressed=false;
 
 	public DrawingView(Context context, AttributeSet attrs){
 	    super(context, attrs);
@@ -45,15 +50,20 @@ public class DrawingView extends View {
 		drawPath = new Path();
 		drawPaint = new Paint();
 		drawPaint.setColor(paintColor);
-		
+				
 		drawPaint.setAntiAlias(true);
 		drawPaint.setStrokeWidth(brushSize);
 		drawPaint.setStyle(Paint.Style.STROKE);
 		drawPaint.setStrokeJoin(Paint.Join.ROUND);
 		drawPaint.setStrokeCap(Paint.Cap.ROUND);
 		
+		cursorPaint = new Paint(drawPaint);	
+		cursorPaint.setStrokeWidth(5);
+		
 		canvasPaint = new Paint(Paint.DITHER_FLAG);
 		
+		tetherMode = false;
+		X = Y = Z = 0;
 	}
 	
 	@Override
@@ -69,27 +79,47 @@ public class DrawingView extends View {
 	//draw view
 		canvas.drawBitmap(canvasBitmap, 0, 0, canvasPaint);
 		canvas.drawPath(drawPath, drawPaint);
+		cursorPaint.setStrokeWidth(5);
+		canvas.drawCircle((float)X, (float) Y, (float)100.0, cursorPaint);
 	}
 	
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 	//detect user touch
-		float touchX = event.getX();
-		float touchY = event.getY();
-		switch (event.getAction()) {
-		case MotionEvent.ACTION_DOWN:
-		    drawPath.moveTo(touchX, touchY);
-		    break;
-		case MotionEvent.ACTION_MOVE:
-		    drawPath.lineTo(touchX, touchY);
-		    break;
-		case MotionEvent.ACTION_UP:
-		    drawCanvas.drawPath(drawPath, drawPaint);
-		    drawPath.reset();
-		    break;
-		default:
-		    return false;
+		if(tetherMode) {
+			switch (event.getAction()) {
+			case MotionEvent.ACTION_DOWN:
+			    drawPath.moveTo((float) X, (float) Y);
+			    pressed = true;
+			    break;
+			case MotionEvent.ACTION_UP:
+			    drawCanvas.drawPath(drawPath, drawPaint);
+			    drawPath.reset();
+			    pressed = false;
+			    break;
+			default:
+			}
 		}
+		else {
+			float touchX = event.getX();
+			float touchY = event.getY();
+			X = touchX;
+			Y = touchY;
+			switch (event.getAction()) {
+			case MotionEvent.ACTION_DOWN:
+			    drawPath.moveTo(touchX, touchY);
+			    break;
+			case MotionEvent.ACTION_MOVE:
+			    drawPath.lineTo(touchX, touchY);
+			    break;
+			case MotionEvent.ACTION_UP:
+			    drawCanvas.drawPath(drawPath, drawPaint);
+			    drawPath.reset();
+			    break;
+			default:
+			    return false;
+			}
+		}		
 		invalidate();
 		return true;
 	}
@@ -99,6 +129,7 @@ public class DrawingView extends View {
 		invalidate();
 		paintColor = Color.parseColor(newColor);
 		drawPaint.setColor(paintColor);
+		cursorPaint.setColor(paintColor);
 	}
 	
 	public void setBrushSize(float newSize) {
@@ -127,6 +158,23 @@ public class DrawingView extends View {
 	public void startNew(){
 	    drawCanvas.drawColor(0, PorterDuff.Mode.CLEAR);
 	    invalidate();
+	}
+	
+	public void setMode(boolean mode) {
+		tetherMode = mode;
+	}
+	
+	public void setCoords(double newX, double newY, double newZ) {
+		X = newX*100 + 200;
+		Y = newZ*100 + 200;
+		Z = newY;
+		if(tetherMode) { 
+			setBrushSize((float)Z);
+		}
+		if(pressed){
+			drawPath.lineTo((float) X, (float) Y);
+		}
+		invalidate();
 	}
 
 	

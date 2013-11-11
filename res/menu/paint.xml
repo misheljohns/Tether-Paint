@@ -5,5 +5,17 @@
         android:orderInCategory="100"
         android:showAsAction="never"
         android:title="@string/action_settings"/>
+    
+    <item android:id="@+id/connect" 
+        android:title="Connect"        
+        android:showAsAction="never"/>
+    
+    <item android:id="@+id/disconnect" 
+        android:title="Disconnect"        
+        android:showAsAction="never"/>
+    
+    <item android:id="@+id/dispCoords" 
+        android:title="Display Coords"        
+        android:showAsAction="never"/>
 
 </menu>

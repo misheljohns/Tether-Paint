@@ -2,23 +2,34 @@ package com.tether.paint;
 
 import android.os.Bundle;
 import android.app.Activity;
+import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
+import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import java.util.UUID;
+
 import android.provider.MediaStore;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.widget.Toast;
 
-public class Paint extends Activity implements OnClickListener {
+import tether.Tether;
+
+public class Paint extends Activity implements OnClickListener,Tether.TetherCallbacks { //,OnTouchListener
 	
 	private DrawingView drawView;
 	private ImageButton currPaint, drawBtn, eraseBtn, newBtn, saveBtn;
+	
+	//private Button tetherDraw;
 	
 	private float smallBrush, mediumBrush, largeBrush;
 	
@@ -55,9 +66,16 @@ public class Paint extends Activity implements OnClickListener {
 		saveBtn = (ImageButton)findViewById(R.id.save_btn);
 		saveBtn.setOnClickListener(this);
 		
+		//tetherDraw = (Button)findViewById(R.id.tethDrawButton);
+		
 		drawView.setBrushSize(mediumBrush);
 		
+		X = 0.0;
+		Y = 0.0;
+		Z = 0.0;
 		
+		Tether.makeTether(TETHER_ADDRESS, this);
+		Log.v(TAG, "my tether: " + Tether.getTether(TETHER_ADDRESS));
 	}
 
 	@Override
@@ -66,6 +84,30 @@ public class Paint extends Activity implements OnClickListener {
 		getMenuInflater().inflate(R.menu.paint, menu);
 		return true;
 	}
+	
+	public boolean onOptionsItemSelected(MenuItem item1)
+    {
+    	switch(item1.getItemId())
+    	{
+    	case R.id.action_settings:
+    		return true;
+    	case R.id.connect:
+    		Log.v(TAG, "Starting tether.");
+    		Tether.getTether(TETHER_ADDRESS).start();
+    		drawView.setMode(true);
+    		return true;
+    	case R.id.disconnect:
+    		Log.v(TAG, "Stopping tether.");
+    		Tether.getTether(TETHER_ADDRESS).stop(); 
+    		drawView.setMode(false);
+    		return true;
+    	case R.id.dispCoords:
+    		Toast savedToast = Toast.makeText(getApplicationContext(),"X: " + X + ", Y: " + Y + ", Z: " + Z, Toast.LENGTH_SHORT);
+	    	savedToast.show();
+	    	return true;
+    	}
+    	return true;
+    }
 	
 	public void paintClicked(View view){
 		drawView.setErase(false);
@@ -208,6 +250,48 @@ public class Paint extends Activity implements OnClickListener {
 			});
 			saveDialog.show();
 		}
+	}
+
+	@Override
+	public void connected() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void disconnected() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void positionUpdate(double newX, double newY, double newZ) {
+		X = newX;
+		Y = newY;
+		Z = newZ;
+		//drawView.setCoords(newX, newY, newZ);
+		runOnUiThread(new Runnable() {
+		     public void run() {
+		    	 drawView.setCoords(X, Y, Z);
+		    }
+		});
+	}
+
+	/*
+	@Override
+	public boolean onTouch(View v, MotionEvent event) {
+		if(v.getId() == R.id.tethDrawButton) {
+			
+		}
+		// TODO Auto-generated method stub
+		return false;
+	}
+	*/
+	
+	@Override
+	protected void onStop() {
+		super.onStop();
+		Tether.getTether(TETHER_ADDRESS).stop();
 	}
 
 }
