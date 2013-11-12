@@ -80,7 +80,8 @@ public class DrawingView extends View {
 		canvas.drawBitmap(canvasBitmap, 0, 0, canvasPaint);
 		canvas.drawPath(drawPath, drawPaint);
 		cursorPaint.setStrokeWidth(5);
-		canvas.drawCircle((float)X, (float) Y, (float)100.0, cursorPaint);
+		//canvas.drawCircle((float)X, (float) Y, (float)100.0, cursorPaint);
+		canvas.drawCircle((float)X, (float) Y, brushSize, cursorPaint);
 	}
 	
 	@Override
@@ -166,10 +167,11 @@ public class DrawingView extends View {
 	
 	public void setCoords(double newX, double newY, double newZ) {
 		X = newX*100 + 200;
-		Y = newZ*100 + 200;
-		Z = newY;
+		Y = newY*100 + 200;
+		Z = newZ;
+		
 		if(tetherMode) { 
-			setBrushSize((float)Z);
+			setBrushSize((float)Math.abs((20-Z)*5));
 		}
 		if(pressed){
 			drawPath.lineTo((float) X, (float) Y);

@@ -254,13 +254,25 @@ public class Paint extends Activity implements OnClickListener,Tether.TetherCall
 
 	@Override
 	public void connected() {
-		// TODO Auto-generated method stub
+		runOnUiThread(new Runnable() {
+		     public void run() {
+		    	Toast connectedT = Toast.makeText(getApplicationContext(), "Connected!", Toast.LENGTH_SHORT);
+		 		connectedT.show();
+		    }
+		});
+		
 		
 	}
 
 	@Override
 	public void disconnected() {
-		// TODO Auto-generated method stub
+		runOnUiThread(new Runnable() {
+		     public void run() {
+		    	 Toast disconnectedT = Toast.makeText(getApplicationContext(), "Disconnected!", Toast.LENGTH_SHORT);
+		 		 disconnectedT.show();
+		    }
+		});
+		
 		
 	}
 
@@ -290,8 +302,8 @@ public class Paint extends Activity implements OnClickListener,Tether.TetherCall
 	
 	@Override
 	protected void onStop() {
-		super.onStop();
 		Tether.getTether(TETHER_ADDRESS).stop();
+		super.onStop();		
 	}
 
 }
