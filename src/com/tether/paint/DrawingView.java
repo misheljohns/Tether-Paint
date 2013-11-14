@@ -166,8 +166,8 @@ public class DrawingView extends View {
 	}
 	
 	public void setCoords(double newX, double newY, double newZ) {
-		X = newX*100 + 200;
-		Y = newY*100 + 200;
+		X = newX*100 + 600;
+		Y = newY*100 + 800;
 		Z = newZ;
 		
 		if(tetherMode) { 

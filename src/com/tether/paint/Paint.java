@@ -1,50 +1,89 @@
 package com.tether.paint;
 
-import android.os.Bundle;
-import android.app.Activity;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.View.OnTouchListener;
-import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-
 import java.util.UUID;
 
-import android.provider.MediaStore;
+import tether.Tether;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.provider.MediaStore;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.WindowManager.LayoutParams;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import tether.Tether;
-
-public class Paint extends Activity implements OnClickListener,Tether.TetherCallbacks { //,OnTouchListener
+public class Paint extends Activity implements OnClickListener {
 	
-	private DrawingView drawView;
-	private ImageButton currPaint, drawBtn, eraseBtn, newBtn, saveBtn;
+	// Log tag
+	private static String TAG = "tether.paint";
 	
-	//private Button tetherDraw;
-	
-	private float smallBrush, mediumBrush, largeBrush;
-	
-	private String TAG = "Tether_paint";
-	
+	// Address of the device
 	private String TETHER_ADDRESS = "00:06:66:4E:3E:CE";
 	
-	private double X;
-	private double Y;
-	private double Z;
+	// Tether object
+	private Tether tether;
+	
+	// Drawing canvas view
+	private DrawingView drawView;
+	
+	// Toolbar buttnos
+	private ImageButton currPaint, drawBtn, eraseBtn, newBtn, saveBtn;
+	
+	// Brush sizes
+	private float smallBrush, mediumBrush, largeBrush;
 
+	// Handler for this Tether
+	private static final class TetherHandler extends Handler {
+		
+		private final Paint activity;
+		private TetherHandler(Paint a) { activity = a; }
+		
+		@Override
+		public void handleMessage(Message msg) {
+			
+			Bundle b = msg.getData();
+			
+			switch (msg.what) {
+				case Tether.CONNECTED:
+					activity.tetherConnected();
+					break;
+				case Tether.DISCONNECTED:
+					activity.tetherDisconnected();
+					break;
+				case Tether.POSITION_UPDATE:
+					double X = b.getDouble("X");
+					double Y = b.getDouble("Y");
+					double Z = b.getDouble("Z");
+					activity.tetherPositionUpdated(X, Y, Z);
+					break;
+			}
+		}
+	}
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_paint);
+		
+		// Don't turn off the screen
+		getWindow().addFlags(LayoutParams.FLAG_KEEP_SCREEN_ON);
+		
+		// Create a Tether object and set the Handler
+		tether = new Tether(TETHER_ADDRESS);
+		tether.setHandler(new TetherHandler(this));
+		
+		Log.v(TAG, "my tether: " + tether);
+		
 		drawView = (DrawingView)findViewById(R.id.drawing);
 		LinearLayout paintLayout = (LinearLayout)findViewById(R.id.paint_colors);
 		currPaint = (ImageButton)paintLayout.getChildAt(0);
@@ -69,13 +108,6 @@ public class Paint extends Activity implements OnClickListener,Tether.TetherCall
 		//tetherDraw = (Button)findViewById(R.id.tethDrawButton);
 		
 		drawView.setBrushSize(mediumBrush);
-		
-		X = 0.0;
-		Y = 0.0;
-		Z = 0.0;
-		
-		Tether.makeTether(TETHER_ADDRESS, this);
-		Log.v(TAG, "my tether: " + Tether.getTether(TETHER_ADDRESS));
 	}
 
 	@Override
@@ -93,15 +125,18 @@ public class Paint extends Activity implements OnClickListener,Tether.TetherCall
     		return true;
     	case R.id.connect:
     		Log.v(TAG, "Starting tether.");
-    		Tether.getTether(TETHER_ADDRESS).start();
+    		tether.start();
     		drawView.setMode(true);
     		return true;
     	case R.id.disconnect:
     		Log.v(TAG, "Stopping tether.");
-    		Tether.getTether(TETHER_ADDRESS).stop(); 
+    		tether.stop(); 
     		drawView.setMode(false);
     		return true;
     	case R.id.dispCoords:
+    		double X = tether.X();
+    		double Y = tether.Y();
+    		double Z = tether.Z();
     		Toast savedToast = Toast.makeText(getApplicationContext(),"X: " + X + ", Y: " + Y + ", Z: " + Z, Toast.LENGTH_SHORT);
 	    	savedToast.show();
 	    	return true;
@@ -126,6 +161,7 @@ public class Paint extends Activity implements OnClickListener,Tether.TetherCall
 	}
 	
 	public void onClick(View view){
+		Log.v(TAG, "on click called on : " + view);
 		if(view.getId()==R.id.draw_btn){
 		    //draw button clicked
 			final Dialog brushDialog = new Dialog(this);
@@ -252,57 +288,25 @@ public class Paint extends Activity implements OnClickListener,Tether.TetherCall
 		}
 	}
 
-	@Override
-	public void connected() {
-		runOnUiThread(new Runnable() {
-		     public void run() {
-		    	Toast connectedT = Toast.makeText(getApplicationContext(), "Connected!", Toast.LENGTH_SHORT);
-		 		connectedT.show();
-		    }
-		});
-		
+	public void tetherConnected() {
+    	Toast connectedT = Toast.makeText(getApplicationContext(), "Connected!", Toast.LENGTH_SHORT);
+ 		connectedT.show();
 		
 	}
 
-	@Override
-	public void disconnected() {
-		runOnUiThread(new Runnable() {
-		     public void run() {
-		    	 Toast disconnectedT = Toast.makeText(getApplicationContext(), "Disconnected!", Toast.LENGTH_SHORT);
-		 		 disconnectedT.show();
-		    }
-		});
-		
-		
+	public void tetherDisconnected() {
+    	 Toast disconnectedT = Toast.makeText(getApplicationContext(), "Disconnected!", Toast.LENGTH_SHORT);
+ 		 disconnectedT.show();
 	}
 
-	@Override
-	public void positionUpdate(double newX, double newY, double newZ) {
-		X = newX;
-		Y = newY;
-		Z = newZ;
-		//drawView.setCoords(newX, newY, newZ);
-		runOnUiThread(new Runnable() {
-		     public void run() {
-		    	 drawView.setCoords(X, Y, Z);
-		    }
-		});
+	public void tetherPositionUpdated(double X, double Y, double Z) {
+	   	drawView.setCoords(X, Y, Z);
+   	    drawView.invalidate();
 	}
-
-	/*
-	@Override
-	public boolean onTouch(View v, MotionEvent event) {
-		if(v.getId() == R.id.tethDrawButton) {
-			
-		}
-		// TODO Auto-generated method stub
-		return false;
-	}
-	*/
 	
 	@Override
 	protected void onStop() {
-		Tether.getTether(TETHER_ADDRESS).stop();
+		tether.stop();
 		super.onStop();		
 	}
 
