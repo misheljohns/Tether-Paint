@@ -65,6 +65,25 @@ public class Paint extends Activity implements OnClickListener {
 					double Z = b.getDouble("Z");
 					activity.tetherPositionUpdated(X, Y, Z);
 					break;
+				case Tether.AOK:
+					//activity.showToast(b.getString("INFO"));
+					break;
+				case Tether.ERROR:
+					activity.showToast(b.getString("INFO"));
+					break;
+				case Tether.BUTTON_1:
+					boolean pressed1 = b.getBoolean("PRESSED");
+					if(pressed1)
+						activity.tether.sendCommand("TRACKING 1");
+					else
+						activity.tether.sendCommand("TRACKING 0");
+					break;
+				case Tether.BUTTON_2:
+					boolean pressed2 = b.getBoolean("PRESSED");
+					break;
+				default:
+					Log.w(TAG, "Received unprocessed message id from libtether: " + msg.what);
+					break;
 			}
 		}
 	}
@@ -81,6 +100,7 @@ public class Paint extends Activity implements OnClickListener {
 		// Create a Tether object and set the Handler
 		tether = new Tether(TETHER_ADDRESS);
 		tether.setHandler(new TetherHandler(this));
+		tether.begin();
 		
 		Log.v(TAG, "my tether: " + tether);
 		
@@ -125,12 +145,12 @@ public class Paint extends Activity implements OnClickListener {
     		return true;
     	case R.id.connect:
     		Log.v(TAG, "Starting tether.");
-    		tether.start();
+    		tether.begin();
     		drawView.setMode(true);
     		return true;
     	case R.id.disconnect:
     		Log.v(TAG, "Stopping tether.");
-    		tether.stop(); 
+    		tether.end(); 
     		drawView.setMode(false);
     		return true;
     	case R.id.dispCoords:
@@ -158,6 +178,12 @@ public class Paint extends Activity implements OnClickListener {
 			currPaint.setImageDrawable(getResources().getDrawable(R.drawable.paint));
 			currPaint=(ImageButton)view;
 			}
+	}
+	
+	public void showToast(String str) {
+	    Toast toast = Toast.makeText(getApplicationContext(),
+    	        str, Toast.LENGTH_SHORT);
+    	toast.show();
 	}
 	
 	public void onClick(View view){
@@ -306,7 +332,7 @@ public class Paint extends Activity implements OnClickListener {
 	
 	@Override
 	protected void onStop() {
-		tether.stop();
+		tether.end();
 		super.onStop();		
 	}
 
