@@ -1,5 +1,7 @@
 package com.tether.paint;
 
+
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.content.Context;
 import android.util.AttributeSet;
@@ -18,7 +20,7 @@ public class DrawingView extends View {
 	
 	private boolean tetherMode; 
 	//drawing path
-	private Path drawPath;
+	public Path drawPath;
 	//drawing and canvas paint
 	private Paint drawPaint, canvasPaint, cursorPaint;
 	//initial color
@@ -34,10 +36,18 @@ public class DrawingView extends View {
 	
 	private double X,Y,Z;
 	
-	private boolean pressed=false;
+	public boolean pressed=false;
+	
+	private ScaleGestureDetector mScaleDetector;
+	private float mScaleFactor = 1.f;
+    private float mScaleFocusX;
+    private float mScaleFocusY;
+    private float mFocusX = 0.0f;
+    private float mFocusY = 0.0f;
 
 	public DrawingView(Context context, AttributeSet attrs){
 	    super(context, attrs);
+	    mScaleDetector = new ScaleGestureDetector(context, new ScaleListener());
 	    setupDrawing();
 	}
 	
@@ -77,16 +87,21 @@ public class DrawingView extends View {
 	@Override
 	protected void onDraw(Canvas canvas) {
 	//draw view
+		canvas.save();
+		canvas.scale(mScaleFactor, mScaleFactor, mScaleFocusX, mScaleFocusY);
+		canvas.translate(mFocusX, mFocusY);
 		canvas.drawBitmap(canvasBitmap, 0, 0, canvasPaint);
 		canvas.drawPath(drawPath, drawPaint);
 		cursorPaint.setStrokeWidth(5);
 		//canvas.drawCircle((float)X, (float) Y, (float)100.0, cursorPaint);
 		canvas.drawCircle((float)X, (float) Y, brushSize, cursorPaint);
+		canvas.restore();
 	}
 	
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 	//detect user touch
+		/*
 		if(tetherMode) {
 			switch (event.getAction()) {
 			case MotionEvent.ACTION_DOWN:
@@ -100,25 +115,28 @@ public class DrawingView extends View {
 			    break;
 			default:
 			}
-		}
-		else {
-			float touchX = event.getX();
-			float touchY = event.getY();
-			X = touchX;
-			Y = touchY;
-			switch (event.getAction()) {
-			case MotionEvent.ACTION_DOWN:
-			    drawPath.moveTo(touchX, touchY);
-			    break;
-			case MotionEvent.ACTION_MOVE:
-			    drawPath.lineTo(touchX, touchY);
-			    break;
-			case MotionEvent.ACTION_UP:
-			    drawCanvas.drawPath(drawPath, drawPaint);
-			    drawPath.reset();
-			    break;
-			default:
-			    return false;
+		}*/
+		if(!tetherMode) {
+			mScaleDetector.onTouchEvent(event);
+			if(event.getPointerCount() == 1) {
+				float touchX = event.getX();
+				float touchY = event.getY();
+				X = touchX;
+				Y = touchY;
+				switch (event.getAction()) {
+				case MotionEvent.ACTION_DOWN:
+					drawPath.moveTo(touchX, touchY);
+				    break;
+				case MotionEvent.ACTION_MOVE:
+				    drawPath.lineTo(touchX, touchY);
+				    break;
+				case MotionEvent.ACTION_UP:
+				    drawCanvas.drawPath(drawPath, drawPaint);
+				    drawPath.reset();
+				    break;
+				default:
+				    return false;
+				}
 			}
 		}		
 		invalidate();
@@ -177,6 +195,22 @@ public class DrawingView extends View {
 			drawPath.lineTo((float) X, (float) Y);
 		}
 		invalidate();
+	}
+
+	
+	private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+		@Override
+		public boolean onScale(ScaleGestureDetector detector) {
+		    mScaleFactor *= detector.getScaleFactor();
+	        mScaleFocusX = detector.getFocusX();
+	        mScaleFocusY = detector.getFocusY();
+		
+		    // Don't let the object get too small or too large.
+		    mScaleFactor = Math.max(0.1f, Math.min(mScaleFactor, 5.0f));
+		
+		    invalidate();
+		    return true;
+		}
 	}
 
 	

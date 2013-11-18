@@ -33,7 +33,7 @@ public class Paint extends Activity implements OnClickListener {
 	private Tether tether;
 	
 	// Drawing canvas view
-	private DrawingView drawView;
+	public DrawingView drawView;
 	
 	// Toolbar buttnos
 	private ImageButton currPaint, drawBtn, eraseBtn, newBtn, saveBtn;
@@ -46,7 +46,7 @@ public class Paint extends Activity implements OnClickListener {
 		
 		private final Paint activity;
 		private TetherHandler(Paint a) { activity = a; }
-		
+		boolean pressed1, pressed2;
 		@Override
 		public void handleMessage(Message msg) {
 			
@@ -72,14 +72,17 @@ public class Paint extends Activity implements OnClickListener {
 					activity.showToast(b.getString("INFO"));
 					break;
 				case Tether.BUTTON_1:
-					boolean pressed1 = b.getBoolean("PRESSED");
-					if(pressed1)
-						activity.tether.sendCommand("TRACKING 1");
-					else
+					pressed1 = b.getBoolean("PRESSED");
+					if(pressed1 && pressed2)
 						activity.tether.sendCommand("TRACKING 0");
+					else
+						activity.tether.sendCommand("TRACKING 1");
+					if(pressed1) {
+						activity.drawView.pressed = pressed1;
+					}
 					break;
 				case Tether.BUTTON_2:
-					boolean pressed2 = b.getBoolean("PRESSED");
+					pressed2 = b.getBoolean("PRESSED");
 					break;
 				default:
 					Log.w(TAG, "Received unprocessed message id from libtether: " + msg.what);
