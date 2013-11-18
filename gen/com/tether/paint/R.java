@@ -33,24 +33,26 @@ public final class R {
         public static final int medium=0x7f020004;
         public static final int new_pic=0x7f020005;
         public static final int paint=0x7f020006;
-        public static final int paint_pressed=0x7f020007;
-        public static final int save=0x7f020008;
-        public static final int small=0x7f020009;
+        public static final int paint2=0x7f020007;
+        public static final int paint_pressed=0x7f020008;
+        public static final int save=0x7f020009;
+        public static final int small=0x7f02000a;
     }
     public static final class id {
-        public static final int action_settings=0x7f090009;
-        public static final int connect=0x7f09000a;
-        public static final int disconnect=0x7f09000b;
-        public static final int dispCoords=0x7f09000c;
+        public static final int action_settings=0x7f09000a;
+        public static final int color_pick=0x7f090004;
+        public static final int connect=0x7f09000b;
+        public static final int disconnect=0x7f09000c;
+        public static final int dispCoords=0x7f09000d;
         public static final int draw_btn=0x7f090001;
-        public static final int drawing=0x7f090004;
+        public static final int drawing=0x7f090005;
         public static final int erase_btn=0x7f090002;
-        public static final int large_brush=0x7f090008;
-        public static final int medium_brush=0x7f090007;
+        public static final int large_brush=0x7f090009;
+        public static final int medium_brush=0x7f090008;
         public static final int new_btn=0x7f090000;
-        public static final int paint_colors=0x7f090005;
+        public static final int paint_colors=0x7f090006;
         public static final int save_btn=0x7f090003;
-        public static final int small_brush=0x7f090006;
+        public static final int small_brush=0x7f090007;
     }
     public static final class integer {
         public static final int large_size=0x7f050002;

@@ -40,6 +40,16 @@
             android:contentDescription="@string/save"
             android:src="@drawable/save" />
         
+        <ImageButton
+            android:id="@+id/color_pick"
+			android:layout_width="100dp"
+            android:layout_height="43dp"
+            android:layout_gravity="center"
+		    android:background="#FF660000"
+		    android:layout_marginLeft="30dp"
+		    android:contentDescription="@string/paint"
+		    android:src="@drawable/paint2" />
+        
 	</LinearLayout>
 	
     <com.tether.paint.DrawingView
