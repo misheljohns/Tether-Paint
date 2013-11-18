@@ -73,16 +73,21 @@ public class Paint extends Activity implements OnClickListener {
 					break;
 				case Tether.BUTTON_1:
 					pressed1 = b.getBoolean("PRESSED");
+					/*
 					if(pressed1 && pressed2)
 						activity.tether.sendCommand("TRACKING 0");
 					else
 						activity.tether.sendCommand("TRACKING 1");
-					if(pressed1) {
-						activity.drawView.pressed = pressed1;
+						*/
+					if(pressed1 && !pressed2) {
+						activity.drawView.setTetherDraw(pressed1);
 					}
 					break;
 				case Tether.BUTTON_2:
 					pressed2 = b.getBoolean("PRESSED");
+					if(pressed2 && !pressed1) {
+						activity.drawView.setTetherPanZoom(pressed2);
+					}
 					break;
 				default:
 					Log.w(TAG, "Received unprocessed message id from libtether: " + msg.what);
