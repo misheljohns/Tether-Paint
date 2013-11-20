@@ -27,7 +27,7 @@ public class Paint extends Activity implements OnClickListener {
 	private static String TAG = "tether.paint";
 	
 	// Address of the device
-	private String TETHER_ADDRESS = "00:06:66:4E:3E:CE";
+	private String TETHER_ADDRESS = "00:06:66:4E:44:F5";
 	
 	// Tether object
 	private Tether tether;

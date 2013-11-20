@@ -204,7 +204,10 @@ public class DrawingView extends View {
 		if(tetherMode) { 
 			if(pressed) {
 				setBrushSize((float)Math.abs((TETHER_BRUSHSIZE_ZERO-Z)*TETHER_BRUSHSIZE_SCALE));
-				drawCanvas.drawPoint(X, Y, drawPaint);
+				drawPath.lineTo(X, Y);
+			    drawCanvas.drawPath(drawPath, drawPaint);
+			    drawPath.reset();
+			    drawPath.moveTo(X, Y);
 			}
 			else if(panzoom && !ispanzoomed) { //starting zoom
 				mFocusX = X;
