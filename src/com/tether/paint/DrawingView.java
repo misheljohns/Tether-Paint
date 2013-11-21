@@ -5,6 +5,7 @@ import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -17,6 +18,8 @@ import android.graphics.PorterDuffXfermode;
 import android.util.TypedValue;
 
 public class DrawingView extends View {
+	
+	private static String TAG = "tether.paint.DrawingView";
 	
 	private static final float TETHER_BRUSHSIZE_SCALE = 5.0f;
 	private static final float TETHER_BRUSHSIZE_ZERO = 20.0f;
@@ -50,8 +53,8 @@ public class DrawingView extends View {
 	
 	private ScaleGestureDetector mScaleDetector;
 	private float mScaleFactor = 1.f;
-    private float mScaleFocusX;
-    private float mScaleFocusY;
+    private float mScaleFocusX = 0.0f;
+    private float mScaleFocusY = 0.0f;
     private float mFocusX = 0.0f;
     private float mFocusY = 0.0f;
     private float mFocusZ = 0.0f;
@@ -218,6 +221,7 @@ public class DrawingView extends View {
 				mScaleFactor = mScaleFactor*(1 + (Z-mFocusZ)*TETHER_ZOOM_SCALE);
 				mScaleFocusX = mScaleFocusX + (X - mFocusX)*TETHER_PAN_SCALE;
 				mScaleFocusY = mScaleFocusY + (Y - mFocusY)*TETHER_PAN_SCALE;
+				Log.w(TAG, "mScaleFactor :" + mScaleFactor);
 			}
 			else {
 				setBrushSize((float)Math.abs((20-Z)*5));

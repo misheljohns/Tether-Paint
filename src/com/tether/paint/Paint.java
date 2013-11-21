@@ -1,7 +1,6 @@
 package com.tether.paint;
 
 import java.util.UUID;
-
 import tether.Tether;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -46,7 +45,7 @@ public class Paint extends Activity implements OnClickListener {
 		
 		private final Paint activity;
 		private TetherHandler(Paint a) { activity = a; }
-		boolean pressed1, pressed2;
+		boolean pressed1 = false, pressed2 = false;
 		@Override
 		public void handleMessage(Message msg) {
 			
@@ -79,13 +78,13 @@ public class Paint extends Activity implements OnClickListener {
 					else
 						activity.tether.sendCommand("TRACKING 1");
 						*/
-					if(pressed1 && !pressed2) {
+					if(!pressed2) {
 						activity.drawView.setTetherDraw(pressed1);
 					}
 					break;
 				case Tether.BUTTON_2:
 					pressed2 = b.getBoolean("PRESSED");
-					if(pressed2 && !pressed1) {
+					if(!pressed1) {
 						activity.drawView.setTetherPanZoom(pressed2);
 					}
 					break;
@@ -108,9 +107,7 @@ public class Paint extends Activity implements OnClickListener {
 		// Create a Tether object and set the Handler
 		tether = new Tether(TETHER_ADDRESS);
 		tether.setHandler(new TetherHandler(this));
-		tether.begin();
 		
-		Log.v(TAG, "my tether: " + tether);
 		
 		drawView = (DrawingView)findViewById(R.id.drawing);
 		LinearLayout paintLayout = (LinearLayout)findViewById(R.id.paint_colors);
@@ -154,6 +151,7 @@ public class Paint extends Activity implements OnClickListener {
     	case R.id.connect:
     		Log.v(TAG, "Starting tether.");
     		tether.begin();
+    		Log.v(TAG, "my tether: " + tether);
     		drawView.setMode(true);
     		return true;
     	case R.id.disconnect:
