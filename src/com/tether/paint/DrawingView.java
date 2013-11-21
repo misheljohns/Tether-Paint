@@ -19,15 +19,15 @@ import android.util.TypedValue;
 
 public class DrawingView extends View {
 	
-	private static String TAG = "tether.paint.DrawingView";
+	private static final float TETHER_BRUSHSIZE_SCALE = 0.50f;
+	private static final float TETHER_BRUSHSIZE_ZERO = 40.0f;
+	private static final float TETHER_ZOOM_SCALE = 0.005f;
+	private static float TETHER_DRAW_SCALE = 60.0f;
+	private static float TETHER_X_ZERO = 350.0f;
+	private static float TETHER_Y_ZERO = 400.0f;
+	private static final float TETHER_PAN_SCALE = 0.2f;
 	
-	private static final float TETHER_BRUSHSIZE_SCALE = 5.0f;
-	private static final float TETHER_BRUSHSIZE_ZERO = 20.0f;
-	private static final float TETHER_ZOOM_SCALE = 0.1f;
-	private static final float TETHER_DRAW_SCALE = 100.0f;
-	private static final float TETHER_X_ZERO = 600.0f;
-	private static final float TETHER_Y_ZERO = 800.0f;
-	private static final float TETHER_PAN_SCALE = 100.0f;
+	private static String TAG = "tether.paint.drawview";
 	
 	private boolean tetherMode; 
 	//drawing path
@@ -48,16 +48,19 @@ public class DrawingView extends View {
 	private float X,Y,Z;
 	
 	private boolean pressed=false;
+	private boolean ispressed=false;
 	private boolean panzoom=false;
 	private boolean ispanzoomed=false;
 	
 	private ScaleGestureDetector mScaleDetector;
 	private float mScaleFactor = 1.f;
-    private float mScaleFocusX = 0.0f;
-    private float mScaleFocusY = 0.0f;
+    private float mScaleFocusX;
+    private float mScaleFocusY;
     private float mFocusX = 0.0f;
     private float mFocusY = 0.0f;
     private float mFocusZ = 0.0f;
+    private float mPanX = 0.0f;
+    private float mPanY = 0.0f;
 
 	public DrawingView(Context context, AttributeSet attrs){
 	    super(context, attrs);
@@ -96,18 +99,23 @@ public class DrawingView extends View {
 		super.onSizeChanged(w, h, oldw, oldh);
 		canvasBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
 		drawCanvas = new Canvas(canvasBitmap);
+		TETHER_X_ZERO = w/2;
+		TETHER_Y_ZERO = h/2;
+		TETHER_DRAW_SCALE = Math.max(w, h)/(20);
 	}
 	
 	@Override
 	protected void onDraw(Canvas canvas) {
 	//draw view
+		//Log.v(TAG,"height" + canvas.getHeight() + "width" + canvas.getWidth());
 		canvas.save();
 		canvas.scale(mScaleFactor, mScaleFactor, mScaleFocusX, mScaleFocusY);
-		//canvas.translate(mFocusX, mFocusY);
+		canvas.translate(mPanX, mPanY);
 		canvas.drawBitmap(canvasBitmap, 0, 0, canvasPaint);
+		canvas.drawRect(0, 0, canvas.getWidth(), canvas.getHeight(), cursorPaint);
 		canvas.drawPath(drawPath, drawPaint);
 		if(tetherMode) {
-			cursorPaint.setStrokeWidth(5);
+			//cursorPaint.setStrokeWidth(5);
 			//canvas.drawCircle((float)X, (float) Y, (float)100.0, cursorPaint);
 			canvas.drawCircle((float)X, (float) Y, brushSize, cursorPaint);
 		}
@@ -201,33 +209,65 @@ public class DrawingView extends View {
 	
 	public void setCoords(double newX, double newY, double newZ) {
 		X = (float) newX*TETHER_DRAW_SCALE + TETHER_X_ZERO;
-		Y = (float) newY*TETHER_DRAW_SCALE + TETHER_Y_ZERO;
+		Y = (float) -newY*TETHER_DRAW_SCALE + TETHER_Y_ZERO;
 		Z = (float) newZ;
 		
 		if(tetherMode) { 
-			if(pressed) {
-				setBrushSize((float)Math.abs((TETHER_BRUSHSIZE_ZERO-Z)*TETHER_BRUSHSIZE_SCALE));
-				drawPath.lineTo(X, Y);
-			    drawCanvas.drawPath(drawPath, drawPaint);
-			    drawPath.reset();
+			/*
+			if(mScaleFactor > 1) {
+				X = X + (X - mScaleFocusX)*(mScaleFactor - 1);
+				Y = Y + (Y - mScaleFocusY)*(mScaleFactor - 1);
+			}
+			else if(mScaleFactor < 1) {
+				X = X - (X - mScaleFocusX)*(1 - mScaleFactor);
+				Y = Y - (Y - mScaleFocusY)*(1 - mScaleFactor);
+			}*/
+			X = mScaleFocusX + (X - mScaleFocusX)/mScaleFactor;
+			Y = mScaleFocusY + (Y - mScaleFocusY)/mScaleFactor;
+			if(pressed) {	
+				setBrushSize((float)Math.abs((TETHER_BRUSHSIZE_ZERO-Z)*TETHER_BRUSHSIZE_SCALE/mScaleFactor));
+				if(ispressed) {
+					drawPath.lineTo(X, Y);
+				    drawCanvas.drawPath(drawPath, drawPaint);
+				    drawPath.reset();
+				}
 			    drawPath.moveTo(X, Y);
 			}
 			else if(panzoom && !ispanzoomed) { //starting zoom
-				mFocusX = X;
-				mFocusY = Y;
+				mScaleFocusX = mFocusX = X;
+				mScaleFocusY = mFocusY = Y;
 				mFocusZ = Z;
 			}
 			else if(panzoom) { //continuing zoom
-				mScaleFactor = mScaleFactor*(1 + (Z-mFocusZ)*TETHER_ZOOM_SCALE);
-				mScaleFocusX = mScaleFocusX + (X - mFocusX)*TETHER_PAN_SCALE;
-				mScaleFocusY = mScaleFocusY + (Y - mFocusY)*TETHER_PAN_SCALE;
-				Log.w(TAG, "mScaleFactor :" + mScaleFactor);
+				float cScaleFactor = (1 + (Z-mFocusZ)*TETHER_ZOOM_SCALE);
+				mScaleFactor = mScaleFactor*cScaleFactor;
+				mScaleFactor = Math.max(0.1f, Math.min(mScaleFactor, 5.0f));
+				/*
+				if((cScaleFactor > 1.001)||(cScaleFactor < 0.999)) {
+					mScaleFocusX = (mScaleFocusX*(1-cScaleFactor) + mFocusX*(cScaleFactor - 1/cScaleFactor))/(1-1/cScaleFactor);
+					mScaleFocusY = (mScaleFocusY*(1-cScaleFactor) + mFocusY*(cScaleFactor - 1/cScaleFactor))/(1-1/cScaleFactor);
+				}
+				else {
+					mScaleFocusX = mFocusX;
+					mScaleFocusY = mFocusY;
+				} */
+				
+				mPanX = (X - mFocusX)*TETHER_PAN_SCALE;
+				mPanY = (Y - mFocusY)*TETHER_PAN_SCALE;
 			}
 			else {
-				setBrushSize((float)Math.abs((20-Z)*5));
+				setBrushSize((float)Math.abs((TETHER_BRUSHSIZE_ZERO-Z)*TETHER_BRUSHSIZE_SCALE/mScaleFactor));
 			}
+			ispressed = pressed;
+			ispanzoomed = panzoom;
 		}
 		invalidate();
+	}
+	
+	public void zeroView() {
+		mScaleFactor = 1;
+		mScaleFocusX = 0;
+		mScaleFocusY = 0;
 	}
 	
 	public void setTetherDraw(boolean mode) {

@@ -1,6 +1,7 @@
 package com.tether.paint;
 
 import java.util.UUID;
+
 import tether.Tether;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -45,7 +46,7 @@ public class Paint extends Activity implements OnClickListener {
 		
 		private final Paint activity;
 		private TetherHandler(Paint a) { activity = a; }
-		boolean pressed1 = false, pressed2 = false;
+		boolean pressed1, pressed2;
 		@Override
 		public void handleMessage(Message msg) {
 			
@@ -78,14 +79,20 @@ public class Paint extends Activity implements OnClickListener {
 					else
 						activity.tether.sendCommand("TRACKING 1");
 						*/
-					if(!pressed2) {
+					if(pressed1 && !pressed2) {
 						activity.drawView.setTetherDraw(pressed1);
+					}
+					else {
+						activity.drawView.setTetherDraw(false);
 					}
 					break;
 				case Tether.BUTTON_2:
 					pressed2 = b.getBoolean("PRESSED");
-					if(!pressed1) {
+					if(pressed2 && !pressed1) {
 						activity.drawView.setTetherPanZoom(pressed2);
+					}
+					else {
+						activity.drawView.setTetherPanZoom(false);
 					}
 					break;
 				default:
@@ -107,7 +114,9 @@ public class Paint extends Activity implements OnClickListener {
 		// Create a Tether object and set the Handler
 		tether = new Tether(TETHER_ADDRESS);
 		tether.setHandler(new TetherHandler(this));
+		//tether.begin();
 		
+		Log.v(TAG, "my tether: " + tether);
 		
 		drawView = (DrawingView)findViewById(R.id.drawing);
 		LinearLayout paintLayout = (LinearLayout)findViewById(R.id.paint_colors);
@@ -151,7 +160,6 @@ public class Paint extends Activity implements OnClickListener {
     	case R.id.connect:
     		Log.v(TAG, "Starting tether.");
     		tether.begin();
-    		Log.v(TAG, "my tether: " + tether);
     		drawView.setMode(true);
     		return true;
     	case R.id.disconnect:
@@ -333,7 +341,6 @@ public class Paint extends Activity implements OnClickListener {
 
 	public void tetherPositionUpdated(double X, double Y, double Z) {
 	   	drawView.setCoords(X, Y, Z);
-   	    drawView.invalidate();
 	}
 	
 	@Override
@@ -341,5 +348,16 @@ public class Paint extends Activity implements OnClickListener {
 		tether.end();
 		super.onStop();		
 	}
+	
+	@Override
+	protected void onPause() {
+		tether.end();
+		super.onPause();		
+	}
 
+	
+	public void zeroTether(View v) {
+		tether.sendCommand("ZERO");
+		drawView.zeroView();
+	}
 }
